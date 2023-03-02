@@ -6,6 +6,47 @@ const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
+router.get("/message", async (req,res)=>{
+  const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+  // get the token header key from http request
+  const token = req.header(tokenHeaderKey);
+  // jwt from .env
+  const jwtSecretKey = process.env.JWT_SECRET_KEY;
+
+
+
+    try {
+    const verified = jwt.verify(token, jwtSecretKey);
+    //tokens dont match
+    if (!verified) {
+      return res.json({
+        success: false,
+        message: "ID Token could not be verified",
+      });
+    }
+
+    const userData = verified.userData;
+
+    //tokens match
+    if (userData && userData.scope === "user") {
+      return res.json({
+        success: true,
+        message: "I am a normal user",
+      });
+    }
+
+    if (userData && userData.scope === "admin") {
+      return res.json({
+        success: true,
+        message: "I am an admin user",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred" });
+  }
+})
+
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -77,11 +118,6 @@ router.post('/login', async (req, res) => {
     const jwtSecretKey = process.env.JWT_SECRET_KEY;
     const token = jwt.sign(payload, jwtSecretKey);
 
-
-
-
-
-
     res.json({ success: true, token, email });
   } catch (error) {
     console.error(error);
@@ -89,8 +125,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
-module.exports = router;
-
+module.exports = router
 
 
